@@ -5,14 +5,17 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
-
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ServerMain {
+    static private final Logger LOGGER = LoggerFactory.getLogger(ServerMain.class);
+
     public static void main(String[] args) {
         EventLoopGroup bossGroup = new NioEventLoopGroup();
         EventLoopGroup workerGroup = new NioEventLoopGroup();
@@ -27,7 +30,9 @@ public class ServerMain {
                         new HttpServerCodec(),
                         new HttpObjectAggregator(65535),
                         new WebSocketServerProtocolHandler("/websocket"),
-                        new GameMsgHandler()
+                        new GameMsgDecoder(),//自定义解码器
+                        new GameMsgEncoder(),//自定义编码器
+                        new GameMsgHandler()//自定义消息处理器
                 );
             }
         });
@@ -36,7 +41,7 @@ public class ServerMain {
             ChannelFuture f = b.bind(12345).sync();
 
             if (f.isSuccess()) {
-                System.out.println("服务器启动成功");
+                LOGGER.info("服务器启动成功");
             }
 
             f.channel().closeFuture().sync();
